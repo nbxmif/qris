@@ -31,7 +31,7 @@
   .raw-input-field:focus { outline: none; border-color: #4f7ef7; box-shadow: 0 0 0 3px rgba(79, 126, 247, 0.1); }
   .raw-input-actions { display: flex; gap: 8px; margin-top: 12px; }
 
-  .btn { display: inline-block; padding: 8px 18px; font-size: 13px; border: 1.5px solid #ccc; border-radius: 8px; background: #fff; color: #333; cursor: pointer; transition: all 0.15s; font-family: in[...]
+  .btn { display: inline-block; padding: 8px 18px; font-size: 13px; border: 1.5px solid #ccc; border-radius: 8px; background: #fff; color: #333; cursor: pointer; transition: all 0.15s; font-family: inherit; }
   .btn:hover { background: #f0f0f0; border-color: #999; }
   .btn-primary { background: #4f7ef7; color: #fff; border-color: #4f7ef7; }
   .btn-primary:hover { background: #3d63d1; border-color: #3d63d1; }
@@ -70,7 +70,7 @@
 
   .table-wrap { overflow-x: auto; }
   table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e0e0e0; background: #fafafa; whi[...]
+  th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e0e0e0; background: #fafafa; white-space: nowrap; }
   td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
   tr:last-child td { border-bottom: none; }
   tr:hover td { background: #fafafa; }
@@ -81,7 +81,7 @@
   .row-warn td { background: #fffdf5; }
   .row-warn:hover td { background: #fff8e8; }
 
-  .tag-pill { display: inline-block; font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #eef; border: 1px solid #ccd; color: #3[...]
+  .tag-pill { display: inline-block; font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #eef; border: 1px solid #ccd; color: #335; }
   .sub-tag-pill { background: #f0f4ff; border-color: #c0d0ff; color: #3355aa; }
   .mono { font-family: 'Courier New', monospace; font-size: 12px; color: #333; word-break: break-all; }
   .num { font-family: 'Courier New', monospace; font-size: 12px; color: #777; text-align: center; }
@@ -95,13 +95,13 @@
 
   /* Status icon */
   .status-cell { text-align: center; white-space: nowrap; }
-  .status-ok   { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #e6f4ea; color: #1a7a3a; font-size: 14px; font-weight: 7[...]
-  .status-err  { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #fdecea; color: #c62828; font-size: 14px; font-weight: 7[...]
-  .status-warn { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #fff3e0; color: #e65100; font-size: 13px; font-weight: 7[...]
+  .status-ok   { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #e6f4ea; color: #1a7a3a; font-size: 14px; font-weight: 700; }
+  .status-err  { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #fdecea; color: #c62828; font-size: 14px; font-weight: 700; }
+  .status-warn { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #fff3e0; color: #e65100; font-size: 13px; font-weight: 700; }
   .status-na   { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #f0f0f0; color: #aaa; font-size: 11px; }
   .tooltip-wrap { position: relative; display: inline-block; }
   .tooltip-wrap:hover .tooltip { display: block; }
-  .tooltip { display: none; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 11px; padding: 5px 9px; border-radius: 6px; white-space:[...]
+  .tooltip { display: none; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 11px; padding: 5px 9px; border-radius: 6px; white-space: nowrap; z-index: 100; }
   .tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #222; }
 
   /* Tree */
@@ -125,7 +125,7 @@
   .tree-item-warn { border-left: 3px solid #ff9800; }
 
   .loading { display: none; margin-top: 12px; text-align: center; color: #888; font-size: 13px; }
-  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: #4f7ef7; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-[...]
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: #4f7ef7; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle; }
   @keyframes spin { to { transform: rotate(360deg); } }
   .copy-btn { font-size: 11px; padding: 2px 8px; margin-left: 8px; vertical-align: middle; }
 
@@ -180,7 +180,7 @@
     <div class="raw-text" id="rawText"></div>
   </div>
 
-  <div style="padding: 0;" id="badgeArea" style="display:none">
+  <div style="padding: 0;" id="badgeArea">
     <span id="typeBadge" class="type-badge"></span>
     <div class="summary-bar" id="summaryBar"></div>
   </div>
@@ -275,18 +275,16 @@ const SUB_TAGS = {
   '44':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
   '45':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
   '51':{'00':'Global Unique Identifier (GUID)','01':'Merchant PAN (National MPAN)','02':'National Merchant ID','03':'Merchant Criteria'},
-  '62':{'01':'Bill Number','02':'Mobile Number','03':'Store Label','04':'Loyalty Number','05':'Reference Label','06':'Customer Label','07':'Terminal Label','08':'Purpose of Transaction','09':'Addition[...]
+  '62':{'01':'Bill Number','02':'Mobile Number','03':'Store Label','04':'Loyalty Number','05':'Reference Label','06':'Customer Label','07':'Terminal Label','08':'Purpose of Transaction','09':'Addition Information Code'},
   '64':{'00':'Language Preference','01':'Merchant Name (Alternate Language)','02':'Merchant City (Alternate Language)'},
 };
 
-const CURRENCY_CODES = {'360':'IDR – Rupiah Indonesia','840':'USD – US Dollar','702':'SGD – Singapore Dollar','764':'THB – Thai Baht','458':'MYR – Malaysian Ringgit','156':'CNY – Chinese Y[...]
+const CURRENCY_CODES = {'360':'IDR – Rupiah Indonesia','840':'USD – US Dollar','702':'SGD – Singapore Dollar','764':'THB – Thai Baht','458':'MYR – Malaysian Ringgit','156':'CNY – Chinese Yuan'};
 const POI = {'11':'Static QR (reusable)','12':'Dynamic QR (sekali pakai)'};
-const VALID_MCC = new Set(['0742','0763','0780','1520','1711','1731','1740','1750','1761','1771','1799','2741','2791','2842','3000','4011','4111','4112','4119','4121','4131','4214','4215','4225','4411[...]
+const VALID_MCC = new Set(['0742','0763','0780','1520','1711','1731','1740','1750','1761','1771','1799','2741','2791','2842','3000','4011','4111','4112','4119','4121','4131','4214','4215','4225','4411','4457','4468','4511','4582','4711','4789','4812','4814','4816','4829','4899','5012','5013','5014','5018','5021','5039','5044','5045','5046','5047','5051','5065','5072','5085','5094','5099','5111','5122','5137','5139','5160','5162','5172','5198','5200','5211','5231','5251','5261','5271','5411','5412','5422','5441','5451','5462','5499','5511','5521','5522','5531','5532','5541','5542','5551','5561','5571','5592','5598','5599','5621','5631','5641','5651','5661','5681','5691','5697','5698','5699','5711','5712','5713','5714','5718','5719','5722','5732','5733','5734','5735','5736','5737','5738','5739','5741','5742','5743','5744','5745','5746','5750','5811','5812','5814','5816','5817','5818','5832','5912','5921','5922','5960','5983','5999','6010','6011','6012','6211','6221','6211','6300','6381','6399','6512','6513','6529','6530','6536','6537','6538','6540','6541','6542','6543','6545','6546','6547','6548','6549','6550','6577','6588','6589','6590','6610','6211','6768','6800','6810','6820','6821','7011','7012','7032','7033','7210','7211','7251','7261','7273','7277','7278','7291','7297','7298','7299','7311','7321','7332','7333','7349','7361','7375','7379','7392','7393','7394','7395','7399','7511','7512','7513','7519','7520','7525','7531','7534','7535','7538','7542','7549','7622','7623','7629','7631','7641','7922','7929','7930','7933','7941','7992','7993','7994','7995','7996','7997','7998','7999','8011','8021','8031','8041','8042','8043','8044','8049','8050','8062','8071','8099','8111','8211','8220','8231','8244','8249','8299','8351','8398','8641','8651','8661','8675','8699','8734','8735','8799','8811','8821','8829','8911','8931','8999','9211','9222','9223','9311','9399','9402','9405','9950','9960']);
 
 // ── ISO/QRIS Validation Rules ─────────────────────────────────────────────────
 // Each rule: { std, note, validate(val) -> {ok, warn, msg} }
-// std = display string untuk kolom ISO Std
-// ok=true = valid, ok=false = error, warn=true = warning
 const RULES = {
   '00': {
     std: 'tepat 2 char, nilai "01"',
@@ -379,7 +377,6 @@ const RULES = {
     note: 'EMVCo QR §3.1',
     validate(v, rawStr) {
       if (!/^[0-9A-Fa-f]{4}$/.test(v)) return { ok: false, msg: `CRC harus 4 hex char, ditemukan "${v}"` };
-      // Hitung CRC16-CCITT dari awal string sampai sebelum value CRC
       let computed = crc16(rawStr);
       let computedHex = computed.toString(16).toUpperCase().padStart(4,'0');
       if (computedHex !== v.toUpperCase()) return { ok: false, msg: `CRC tidak cocok! Expected: ${computedHex}, ditemukan: ${v.toUpperCase()}` };
@@ -388,9 +385,7 @@ const RULES = {
   },
 };
 
-// Sub-tag rules
 const SUB_RULES = {
-  // Untuk semua tag 26-51, sub 00 = GUID max 32
   '__guid': {
     std: 'max 32 char',
     note: 'EMVCo QR §4.7',
@@ -400,7 +395,6 @@ const SUB_RULES = {
       return { ok: true, msg: `GUID valid (${v.length} char)` };
     }
   },
-  // sub 01 = MPAN, max 19 numerik (domestic) atau 28 untuk cross border
   '__mpan': {
     std: 'max 19 char numerik',
     note: 'QRIS ASPI / ALTO Spec DE02',
@@ -410,7 +404,6 @@ const SUB_RULES = {
       return { ok: true, msg: `MPAN valid (${v.length} digit)` };
     }
   },
-  // sub 02 = MID, max 15
   '__mid': {
     std: 'max 15 char',
     note: 'QRIS ASPI / ALTO Spec DE42',
@@ -419,7 +412,6 @@ const SUB_RULES = {
       return { ok: true, msg: `MID valid (${v.length} char)` };
     }
   },
-  // sub 03 = Merchant Criteria, 3 char
   '__mc': {
     std: '3 char (UMI / UKE / UBE / dll)',
     note: 'QRIS ASPI',
@@ -430,7 +422,6 @@ const SUB_RULES = {
       return { ok: true, msg: `Merchant Criteria: ${v}` };
     }
   },
-  // tag 62 sub-tags
   '62_01': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
   '62_02': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
   '62_03': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
@@ -456,14 +447,10 @@ function getSubRule(parentTag, subTag) {
   return null;
 }
 
-// ── CRC16-CCITT ──────────────────────────────────────────────────────────
 function crc16(str) {
-  // CRC16-CCITT: poly 0x1021, init 0xFFFF
-  // Input: string up to and including "6304" (tag+len of CRC, no value)
-  // Find position of CRC tag in string
   let idx = str.lastIndexOf('6304');
   if (idx === -1) return 0;
-  let payload = str.substring(0, idx + 4); // include "6304" but not value
+  let payload = str.substring(0, idx + 4);
   let crc = 0xFFFF;
   for (let i=0; i<payload.length; i++) {
     let byte = payload.charCodeAt(i);
@@ -476,7 +463,6 @@ function crc16(str) {
   return crc;
 }
 
-// ── TLV Parser ───────────────────────────────────────────────────────────
 function parseTLV(str, baseOffset=0) {
   let result=[];
   let pos=0;
@@ -492,7 +478,6 @@ function parseTLV(str, baseOffset=0) {
   return result;
 }
 
-// ── Type Detection ────────────────────────────────────────────────────────
 function detectType(fields) {
   let tags=fields.map(f=>f.tag);
   let numTags=tags.map(t=>parseInt(t));
@@ -511,10 +496,9 @@ function enrichValue(tag, val) {
   return val;
 }
 
-// ── Validate a field ─────────────────────────────────────────────────────────
 function validateField(tag, val, rawStr) {
   let rule = RULES[tag];
-  if (!rule) return null; // no rule = not validated
+  if (!rule) return null;
   let result = rule.validate(val, rawStr);
   return { std: rule.std, note: rule.note, ...result };
 }
@@ -526,7 +510,6 @@ function validateSubField(parentTag, subTag, val) {
   return { std: rule.std, note: rule.note, ...result };
 }
 
-// ── Status HTML ───────────────────────────────────────────────────────
 function statusHtml(v) {
   if (!v) return `<span class="status-na" title="Tidak divalidasi">–</span>`;
   let icon, cls, tip;
@@ -549,11 +532,9 @@ function rowCls(v, isSubRow) {
   return base;
 }
 
-// ── Table Render ───────────────────────────────────────────────────────
 function renderTable(fields, rawStr) {
   let html='';
   let stats={ok:0,warn:0,err:0,na:0};
-
   fields.forEach(f=>{
     let desc=TAGS[f.tag]||`Tag ${f.tag} (Unknown)`;
     let subs=SUB_TAGS[f.tag];
@@ -562,7 +543,6 @@ function renderTable(fields, rawStr) {
     let vr=validateField(f.tag,f.val,rawStr);
     let rc=rowCls(vr,false);
     if(!vr) stats.na++; else if(!vr.ok) stats.err++; else if(vr.warn) stats.warn++; else stats.ok++;
-
     html+=`<tr class="${rc}">
       <td><span class="tag-pill">${esc(f.tag)}</span></td>
       <td><strong>${esc(desc)}</strong></td>
@@ -572,7 +552,6 @@ function renderTable(fields, rawStr) {
       <td>${stdHtml(vr)}</td>
       <td class="status-cell">${statusHtml(vr)}</td>
     </tr>`;
-
     subfields.forEach(sf=>{
       let sdesc=(subs&&subs[sf.tag])||`Sub-tag ${sf.tag}`;
       let svr=validateSubField(f.tag,sf.tag,sf.val);
@@ -589,12 +568,10 @@ function renderTable(fields, rawStr) {
       </tr>`;
     });
   });
-
   document.getElementById('tableBody').innerHTML=html;
   return stats;
 }
 
-// ── Tree Render ───────────────────────────────────────────────────────
 function renderTree(fields, rawStr) {
   let root=document.getElementById('treeRoot');
   root.innerHTML='';
@@ -605,13 +582,11 @@ function renderTree(fields, rawStr) {
     let hasChildren=subfields.length>0;
     let vr=validateField(f.tag,f.val,rawStr);
     let enriched=enrichValue(f.tag,f.val);
-
     let li=document.createElement('li');
     let itemCls='tree-item'+(hasChildren?'':' tree-leaf');
     if(vr&&!vr.ok) itemCls+=' tree-item-err';
     else if(vr&&vr.warn) itemCls+=' tree-item-warn';
     li.className=itemCls;
-
     let header=document.createElement('div');
     header.className='tree-header';
     header.innerHTML=`
@@ -622,7 +597,6 @@ function renderTree(fields, rawStr) {
       <span class="tree-meta">pos:${f.pos} len:${f.len}</span>
       <span class="tree-status">${statusHtml(vr)}</span>`;
     li.appendChild(header);
-
     if(hasChildren){
       let childUl=document.createElement('ul');
       childUl.className='tree-node tree-children';
@@ -656,7 +630,6 @@ function renderTree(fields, rawStr) {
   });
 }
 
-// ── Summary Bar ───────────────────────────────────────────────────────
 function renderSummary(stats) {
   let bar=document.getElementById('summaryBar');
   bar.innerHTML=`
@@ -667,7 +640,6 @@ function renderSummary(stats) {
   bar.classList.add('visible');
 }
 
-// ── Core ──────────────────────────────────────────────────────────────
 function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
 
 function processRawString(raw) {
@@ -732,10 +704,7 @@ function processRawStringInput() {
     showError('Harap masukkan raw QR string.');
     return;
   }
-  // Trim any whitespace
   raw = raw.replace(/\s/g, '');
-  // Note: Raw QR string is TLV format (alphanumeric), not pure hex
-  // Validation: must not be empty and should contain only printable characters
   if (/[^\x20-\x7E]/.test(raw)) {
     showError('Raw QR string mengandung karakter tidak valid (hanya karakter ASCII yang printable diperbolehkan).');
     return;
