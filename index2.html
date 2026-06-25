@@ -1,0 +1,781 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>QRIS Decoder & Parser</title>
+<style>
+  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+  body { font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif; font-size: 14px; background: #f5f5f5; color: #1a1a1a; min-height: 100vh; }
+  .container { max-width: 1000px; margin: 0 auto; padding: 24px 16px; }
+  h1 { font-size: 20px; font-weight: 600; margin-bottom: 4px; }
+  .subtitle { font-size: 13px; color: #666; margin-bottom: 24px; }
+
+  .entry-tabs { display: flex; gap: 12px; margin-bottom: 24px; border-bottom: 1px solid #e0e0e0; }
+  .entry-tab { padding: 12px 16px; font-size: 13px; font-weight: 500; cursor: pointer; color: #888; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .entry-tab:hover { color: #333; }
+  .entry-tab.active { color: #4f7ef7; border-bottom-color: #4f7ef7; }
+  .entry-section { display: none; }
+  .entry-section.active { display: block; }
+
+  .drop-zone { border: 2px dashed #ccc; border-radius: 12px; padding: 40px 20px; text-align: center; cursor: pointer; transition: all 0.2s; background: #fff; position: relative; }
+  .drop-zone:hover, .drop-zone.drag { border-color: #4f7ef7; background: #f0f4ff; }
+  .drop-zone input[type=file] { position: absolute; inset: 0; opacity: 0; cursor: pointer; width: 100%; height: 100%; }
+  .drop-icon { font-size: 40px; margin-bottom: 12px; }
+  .drop-title { font-size: 16px; font-weight: 600; margin-bottom: 6px; }
+  .drop-sub { font-size: 13px; color: #888; margin-bottom: 14px; }
+  
+  .raw-input-wrap { background: #fff; border-radius: 12px; border: 1px solid #e0e0e0; padding: 20px; }
+  .raw-input-label { font-size: 13px; font-weight: 600; margin-bottom: 8px; color: #333; }
+  .raw-input-field { width: 100%; padding: 12px 16px; font-family: 'Courier New', monospace; font-size: 12px; border: 1px solid #ccc; border-radius: 8px; min-height: 100px; resize: vertical; }
+  .raw-input-field:focus { outline: none; border-color: #4f7ef7; box-shadow: 0 0 0 3px rgba(79, 126, 247, 0.1); }
+  .raw-input-actions { display: flex; gap: 8px; margin-top: 12px; }
+
+  .btn { display: inline-block; padding: 8px 18px; font-size: 13px; border: 1.5px solid #ccc; border-radius: 8px; background: #fff; color: #333; cursor: pointer; transition: all 0.15s; font-family: inherit; }
+  .btn:hover { background: #f0f0f0; border-color: #999; }
+  .btn-primary { background: #4f7ef7; color: #fff; border-color: #4f7ef7; }
+  .btn-primary:hover { background: #3d63d1; border-color: #3d63d1; }
+
+  .preview-wrap { display: none; margin-top: 16px; text-align: center; }
+  .preview-wrap img { max-height: 200px; max-width: 100%; border-radius: 8px; border: 1px solid #e0e0e0; }
+
+  .raw-box { display: none; margin-top: 16px; background: #1e1e1e; border-radius: 8px; padding: 12px 16px; }
+  .raw-label { font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .06em; margin-bottom: 6px; }
+  .raw-text { font-family: 'Courier New', monospace; font-size: 12px; color: #d4d4d4; word-break: break-all; line-height: 1.6; }
+
+  .err { display: none; margin-top: 16px; background: #fff0f0; border: 1px solid #ffcccc; border-radius: 8px; padding: 12px 16px; color: #cc0000; font-size: 13px; }
+
+  .type-badge { display: inline-block; font-size: 12px; font-weight: 600; padding: 4px 12px; border-radius: 20px; margin: 16px 0 4px; }
+  .badge-mpm { background: #e0f7ef; color: #0a6b4a; }
+  .badge-tcico { background: #fff3e0; color: #8a5000; }
+  .badge-cb { background: #ede7f6; color: #4527a0; }
+  .badge-unknown { background: #f0f0f0; color: #555; }
+
+  /* Summary bar */
+  .summary-bar { display: none; gap: 8px; margin: 8px 0 0; flex-wrap: wrap; }
+  .summary-bar.visible { display: flex; }
+  .sum-chip { display: flex; align-items: center; gap: 5px; font-size: 12px; font-weight: 500; padding: 4px 10px; border-radius: 20px; }
+  .sum-ok { background: #e6f4ea; color: #1a7a3a; }
+  .sum-warn { background: #fff3e0; color: #8a5000; }
+  .sum-err { background: #fdecea; color: #c62828; }
+
+  .result-wrap { display: none; margin-top: 8px; background: #fff; border-radius: 12px; border: 1px solid #e0e0e0; overflow: hidden; }
+
+  .tabs { display: flex; border-bottom: 1px solid #e0e0e0; background: #fafafa; }
+  .tab { padding: 10px 20px; font-size: 13px; font-weight: 500; cursor: pointer; color: #888; border-bottom: 2px solid transparent; transition: all 0.15s; }
+  .tab:hover { color: #333; }
+  .tab.active { color: #4f7ef7; border-bottom-color: #4f7ef7; background: #fff; }
+  .tab-content { display: none; }
+  .tab-content.active { display: block; }
+
+  .table-wrap { overflow-x: auto; }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th { text-align: left; padding: 8px 10px; font-size: 11px; font-weight: 600; color: #888; text-transform: uppercase; letter-spacing: .05em; border-bottom: 1px solid #e0e0e0; background: #fafafa; white-space: nowrap; }
+  td { padding: 7px 10px; border-bottom: 1px solid #f0f0f0; vertical-align: middle; }
+  tr:last-child td { border-bottom: none; }
+  tr:hover td { background: #fafafa; }
+  .sub-row td { background: #fafcff; }
+  .sub-row:hover td { background: #eef3ff; }
+  .row-err td { background: #fff8f8; }
+  .row-err:hover td { background: #fff0f0; }
+  .row-warn td { background: #fffdf5; }
+  .row-warn:hover td { background: #fff8e8; }
+
+  .tag-pill { display: inline-block; font-family: 'Courier New', monospace; font-size: 11px; font-weight: 700; padding: 2px 8px; border-radius: 6px; background: #eef; border: 1px solid #ccd; color: #335; }
+  .sub-tag-pill { background: #f0f4ff; border-color: #c0d0ff; color: #3355aa; }
+  .mono { font-family: 'Courier New', monospace; font-size: 12px; color: #333; word-break: break-all; }
+  .num { font-family: 'Courier New', monospace; font-size: 12px; color: #777; text-align: center; }
+  .sub-indent { padding-left: 28px; }
+  .sub-label { font-size: 11px; color: #888; font-style: italic; }
+
+  /* ISO Std column */
+  .iso-std { font-size: 11px; color: #666; white-space: nowrap; }
+  .iso-rule { font-family: 'Courier New', monospace; font-size: 11px; }
+  .iso-note { font-size: 10px; color: #999; display: block; margin-top: 1px; }
+
+  /* Status icon */
+  .status-cell { text-align: center; white-space: nowrap; }
+  .status-ok   { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #e6f4ea; color: #1a7a3a; font-size: 14px; font-weight: 700; }
+  .status-err  { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #fdecea; color: #c62828; font-size: 14px; font-weight: 700; }
+  .status-warn { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #fff3e0; color: #e65100; font-size: 13px; font-weight: 700; }
+  .status-na   { display: inline-flex; align-items: center; justify-content: center; width: 24px; height: 24px; border-radius: 50%; background: #f0f0f0; color: #aaa; font-size: 11px; }
+  .tooltip-wrap { position: relative; display: inline-block; }
+  .tooltip-wrap:hover .tooltip { display: block; }
+  .tooltip { display: none; position: absolute; bottom: 110%; left: 50%; transform: translateX(-50%); background: #222; color: #fff; font-size: 11px; padding: 5px 9px; border-radius: 6px; white-space: nowrap; z-index: 10; }
+  .tooltip::after { content: ''; position: absolute; top: 100%; left: 50%; transform: translateX(-50%); border: 5px solid transparent; border-top-color: #222; }
+
+  /* Tree */
+  .tree-wrap { padding: 8px 0; }
+  .tree-node { list-style: none; }
+  .tree-item { border-bottom: 1px solid #f0f0f0; }
+  .tree-item:last-child { border-bottom: none; }
+  .tree-header { display: flex; align-items: center; gap: 8px; padding: 8px 16px; cursor: pointer; transition: background 0.1s; }
+  .tree-header:hover { background: #fafafa; }
+  .tree-toggle { width: 18px; font-size: 11px; color: #aaa; flex-shrink: 0; transition: transform 0.15s; display: inline-block; }
+  .tree-toggle.open { transform: rotate(90deg); }
+  .tree-tag { font-family: 'Courier New', monospace; font-size: 12px; font-weight: 700; color: #334; background: #eef; border: 1px solid #ccd; padding: 1px 7px; border-radius: 5px; flex-shrink: 0; }
+  .tree-desc { font-size: 13px; color: #555; flex: 1; min-width: 0; }
+  .tree-val { font-family: 'Courier New', monospace; font-size: 12px; color: #333; max-width: 240px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; flex-shrink: 0; }
+  .tree-meta { font-size: 11px; color: #aaa; flex-shrink: 0; white-space: nowrap; }
+  .tree-status { flex-shrink: 0; }
+  .tree-children { padding-left: 32px; border-left: 2px solid #e8eeff; margin-left: 16px; }
+  .tree-leaf .tree-toggle { visibility: hidden; }
+  .tree-sub .tree-tag { background: #f0f4ff; border-color: #c0d0ff; color: #3355aa; }
+  .tree-item-err { border-left: 3px solid #f44336; }
+  .tree-item-warn { border-left: 3px solid #ff9800; }
+
+  .loading { display: none; margin-top: 12px; text-align: center; color: #888; font-size: 13px; }
+  .spinner { display: inline-block; width: 16px; height: 16px; border: 2px solid #ddd; border-top-color: #4f7ef7; border-radius: 50%; animation: spin 0.7s linear infinite; margin-right: 6px; vertical-align: middle; }
+  @keyframes spin { to { transform: rotate(360deg); } }
+  .copy-btn { font-size: 11px; padding: 2px 8px; margin-left: 8px; vertical-align: middle; }
+
+  /* Legend */
+  .legend { display: flex; gap: 12px; padding: 8px 12px; background: #fafafa; border-bottom: 1px solid #f0f0f0; font-size: 11px; color: #777; flex-wrap: wrap; align-items: center; }
+  .legend-item { display: flex; align-items: center; gap: 4px; }
+</style>
+</head>
+<body>
+<div class="container">
+  <h1>🔍 QRIS Decoder & Parser</h1>
+  <p class="subtitle">Upload, drag, atau paste gambar QR — atau langsung paste raw QR string — decode & validasi otomatis berdasarkan EMVCo + QRIS BI/ASPI Spec</p>
+
+  <!-- Entry Tabs -->
+  <div class="entry-tabs">
+    <div class="entry-tab active" onclick="switchEntry('image')">📷 Upload / Paste Image</div>
+    <div class="entry-tab" onclick="switchEntry('raw')">📝 Paste Raw QR String</div>
+  </div>
+
+  <!-- Image Section -->
+  <div class="entry-section active" id="entryImage">
+    <div class="drop-zone" id="dropZone">
+      <input type="file" accept="image/*" id="fileInput">
+      <div class="drop-icon">📷</div>
+      <div class="drop-title">Upload atau drag gambar QR di sini</div>
+      <div class="drop-sub">JPG, PNG, GIF, WebP — semua resolusi</div>
+      <button class="btn" id="pasteBtn" onclick="event.stopPropagation(); pasteFromClipboard()">📋 Paste dari clipboard</button>
+    </div>
+  </div>
+
+  <!-- Raw String Section -->
+  <div class="entry-section" id="entryRaw">
+    <div class="raw-input-wrap">
+      <div class="raw-input-label">📝 Paste Raw QR String</div>
+      <textarea class="raw-input-field" id="rawStringInput" placeholder="Contoh: 00020126360014..."></textarea>
+      <div class="raw-input-actions">
+        <button class="btn btn-primary" onclick="processRawStringInput()">🔍 Decode</button>
+        <button class="btn" onclick="clearRawInput()">Clear</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="loading" id="loading"><span class="spinner"></span>Membaca QR...</div>
+  <div class="err" id="errBox"></div>
+
+  <div class="preview-wrap" id="previewWrap">
+    <img id="previewImg" src="" alt="QR Preview">
+  </div>
+
+  <div class="raw-box" id="rawBox">
+    <div class="raw-label">Raw QR String <button class="btn copy-btn" onclick="copyRaw()">Copy</button></div>
+    <div class="raw-text" id="rawText"></div>
+  </div>
+
+  <div style="padding: 0;" id="badgeArea" style="display:none">
+    <span id="typeBadge" class="type-badge"></span>
+    <div class="summary-bar" id="summaryBar"></div>
+  </div>
+
+  <div id="resultWrap" class="result-wrap">
+    <div class="tabs">
+      <div class="tab active" onclick="switchTab('table')">📋 Tabel</div>
+      <div class="tab" onclick="switchTab('tree')">🌲 Tree</div>
+    </div>
+
+    <div class="tab-content active" id="tabTable">
+      <div class="legend">
+        <span style="font-weight:600; color:#555;">ISO Std:</span>
+        <span class="legend-item"><span class="status-ok">✓</span> Sesuai spec</span>
+        <span class="legend-item"><span class="status-err">✗</span> Tidak sesuai</span>
+        <span class="legend-item"><span class="status-warn">!</span> Perlu perhatian</span>
+        <span class="legend-item"><span class="status-na">–</span> Tidak divalidasi</span>
+      </div>
+      <div class="table-wrap">
+        <table>
+          <thead>
+            <tr>
+              <th>Tag</th>
+              <th>Deskripsi</th>
+              <th>Value</th>
+              <th class="num">Posisi</th>
+              <th class="num">Panjang</th>
+              <th>ISO Std</th>
+              <th class="num">Status</th>
+            </tr>
+          </thead>
+          <tbody id="tableBody"></tbody>
+        </table>
+      </div>
+    </div>
+
+    <div class="tab-content" id="tabTree">
+      <div class="tree-wrap">
+        <ul class="tree-node" id="treeRoot"></ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script src="https://cdn.jsdelivr.net/npm/jsqr@1.4.0/dist/jsQR.min.js"></script>
+<script>
+// ── Tag Definitions ──────────────────────────────────────────────────────────
+const TAGS = {
+  '00':'Payload Format Indicator','01':'Point of Initiation Method',
+  '26':'Merchant Account Info – Acquirer (26)','27':'Merchant Account Info – Acquirer (27)',
+  '28':'Merchant Account Info – Acquirer (28)','29':'Merchant Account Info – Acquirer (29)',
+  '30':'Merchant Account Info – Acquirer (30)','31':'Merchant Account Info – Acquirer (31)',
+  '32':'Merchant Account Info – Acquirer (32)','33':'Merchant Account Info – Acquirer (33)',
+  '34':'Merchant Account Info – Acquirer (34)','35':'Merchant Account Info – Acquirer (35)',
+  '36':'Merchant Account Info – Acquirer (36)','37':'Merchant Account Info – Acquirer (37)',
+  '38':'Merchant Account Info – Acquirer (38)','39':'Merchant Account Info – Acquirer (39)',
+  '40':'Merchant Account Info – QRIS TCICO','41':'Merchant Account Info – Acquirer (41)',
+  '42':'Merchant Account Info – Acquirer (42)','43':'Merchant Account Info – Acquirer (43)',
+  '44':'Merchant Account Info – Acquirer (44)','45':'Merchant Account Info – Acquirer (45)',
+  '46':'Merchant Account Info – Acquirer (46)','47':'Merchant Account Info – Acquirer (47)',
+  '48':'Merchant Account Info – Acquirer (48)','49':'Merchant Account Info – Acquirer (49)',
+  '50':'Merchant Account Info – Acquirer (50)','51':'Merchant Account Info – QRIS National (51)',
+  '52':'Merchant Category Code (MCC)','53':'Transaction Currency','54':'Transaction Amount',
+  '55':'Tip or Convenience Indicator','56':'Value of Convenience Fee (Fixed)',
+  '57':'Value of Convenience Fee (Percentage)','58':'Country Code',
+  '59':'Merchant Name','60':'Merchant City','61':'Postal Code',
+  '62':'Additional Data Field Template','63':'CRC (Cyclic Redundancy Check)',
+  '64':'Merchant Information – Language Template',
+};
+for (let i=2;i<=25;i++){let t=String(i).padStart(2,'0');if(!TAGS[t])TAGS[t]=`Merchant Account Info (${t})`;}
+for (let i=80;i<=99;i++){let t=String(i).padStart(2,'0');if(!TAGS[t])TAGS[t]=`Unreserved Template (${t})`;}
+
+const SUB_TAGS = {
+  '26':{'00':'Global Unique Identifier (GUID)','01':'Merchant PAN (MPAN)','02':'Merchant ID (MID)','03':'Merchant Criteria'},
+  '27':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '28':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '29':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '30':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '31':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '32':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '33':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '34':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '35':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '36':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '37':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '38':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '39':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '40':{'00':'GUID','01':'Merchant/Beneficiary PAN','02':'Merchant/Beneficiary ID','03':'Merchant Criteria','04':'Bank Identifier Code (BIC)'},
+  '41':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '42':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '43':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '44':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '45':{'00':'GUID','01':'Merchant PAN','02':'Merchant ID','03':'Merchant Criteria'},
+  '51':{'00':'Global Unique Identifier (GUID)','01':'Merchant PAN (National MPAN)','02':'National Merchant ID','03':'Merchant Criteria'},
+  '62':{'01':'Bill Number','02':'Mobile Number','03':'Store Label','04':'Loyalty Number','05':'Reference Label','06':'Customer Label','07':'Terminal Label','08':'Purpose of Transaction','09':'Addition Information'},
+  '64':{'00':'Language Preference','01':'Merchant Name (Alternate Language)','02':'Merchant City (Alternate Language)'},
+};
+
+const CURRENCY_CODES = {'360':'IDR – Rupiah Indonesia','840':'USD – US Dollar','702':'SGD – Singapore Dollar','764':'THB – Thai Baht','458':'MYR – Malaysian Ringgit','156':'CNY – Chinese Yuan'};
+const POI = {'11':'Static QR (reusable)','12':'Dynamic QR (sekali pakai)'};
+const VALID_MCC = new Set(['0742','0763','0780','1520','1711','1731','1740','1750','1761','1771','1799','2741','2791','2842','3000','4011','4111','4112','4119','4121','4131','4214','4215','4225','4411','4457','4814','5411','5412','5422','5441','5451','5462','5499','5812','5813','5921','5977','6211','6051','7011','7393','7999','8211','8220','8244','8249','8299','9211','9222','9223','9311']);
+
+// ── ISO/QRIS Validation Rules ─────────────────────────────────────────────────
+// Each rule: { std, note, validate(val) -> {ok, warn, msg} }
+// std = display string untuk kolom ISO Std
+// ok=true = valid, ok=false = error, warn=true = warning
+const RULES = {
+  '00': {
+    std: 'tepat 2 char, nilai "01"',
+    note: 'EMVCo QR §3.1',
+    validate(v) {
+      if (v !== '01') return { ok: false, msg: `Harus "01", ditemukan "${v}"` };
+      return { ok: true, msg: 'Valid' };
+    }
+  },
+  '01': {
+    std: '"11" (static) atau "12" (dynamic)',
+    note: 'EMVCo QR §3.1',
+    validate(v) {
+      if (v === '11' || v === '12') return { ok: true, msg: v==='11'?'Static QR':'Dynamic QR' };
+      return { ok: false, msg: `Nilai tidak valid. Harus "11" atau "12", ditemukan "${v}"` };
+    }
+  },
+  '52': {
+    std: 'tepat 4 digit numerik',
+    note: 'ISO 18245 / EMVCo',
+    validate(v) {
+      if (!/^\d{4}$/.test(v)) return { ok: false, msg: `MCC harus 4 digit numerik, ditemukan "${v}"` };
+      if (!VALID_MCC.has(v)) return { ok: true, warn: true, msg: `MCC ${v} valid format, namun tidak ditemukan di daftar MCC umum` };
+      return { ok: true, msg: `MCC ${v} valid` };
+    }
+  },
+  '53': {
+    std: 'tepat 3 digit numerik (ISO 4217)',
+    note: 'ISO 4217',
+    validate(v) {
+      if (!/^\d{3}$/.test(v)) return { ok: false, msg: `Kode currency harus 3 digit numerik` };
+      if (!CURRENCY_CODES[v]) return { ok: true, warn: true, msg: `Format valid, namun kode ${v} tidak ada di daftar currency QRIS` };
+      return { ok: true, msg: `Valid: ${CURRENCY_CODES[v]}` };
+    }
+  },
+  '54': {
+    std: 'max 13 char, numerik dengan desimal',
+    note: 'EMVCo QR §3.1',
+    validate(v) {
+      if (v.length > 13) return { ok: false, msg: `Maks 13 karakter, ditemukan ${v.length}` };
+      if (!/^\d+(\.\d{1,2})?$/.test(v)) return { ok: false, msg: `Format amount tidak valid, harus numerik (contoh: 15000.00)` };
+      return { ok: true, msg: `Amount: ${parseFloat(v).toLocaleString('id-ID')}` };
+    }
+  },
+  '55': {
+    std: '"01" (prompt), "02" (fixed), "03" (persen)',
+    note: 'EMVCo QR §3.1',
+    validate(v) {
+      if (!['01','02','03'].includes(v)) return { ok: false, msg: `Harus "01", "02", atau "03"` };
+      const m = {'01':'Pelanggan diminta input tip','02':'Fee tetap (lihat tag 56)','03':'Fee persentase (lihat tag 57)'};
+      return { ok: true, msg: m[v] };
+    }
+  },
+  '58': {
+    std: 'tepat 2 char alpha (ISO 3166-1)',
+    note: 'ISO 3166-1 alpha-2',
+    validate(v) {
+      if (!/^[A-Z]{2}$/.test(v)) return { ok: false, msg: `Harus 2 huruf kapital (misal: ID, SG, TH), ditemukan "${v}"` };
+      return { ok: true, msg: `Country code: ${v}` };
+    }
+  },
+  '59': {
+    std: 'max 25 char',
+    note: 'EMVCo QR §3.1 / QRIS ASPI',
+    validate(v) {
+      if (v.length === 0) return { ok: false, msg: 'Merchant Name tidak boleh kosong' };
+      if (v.length > 25) return { ok: false, msg: `Maks 25 karakter, ditemukan ${v.length} karakter ("${v}")` };
+      return { ok: true, msg: `"${v}" (${v.length} char)` };
+    }
+  },
+  '60': {
+    std: 'max 15 char',
+    note: 'EMVCo QR §3.1 / QRIS ASPI',
+    validate(v) {
+      if (v.length === 0) return { ok: false, msg: 'Merchant City tidak boleh kosong' };
+      if (v.length > 15) return { ok: false, msg: `Maks 15 karakter, ditemukan ${v.length} karakter` };
+      return { ok: true, msg: `"${v}" (${v.length} char)` };
+    }
+  },
+  '61': {
+    std: 'max 10 char',
+    note: 'EMVCo QR §3.1',
+    validate(v) {
+      if (v.length > 10) return { ok: false, msg: `Maks 10 karakter, ditemukan ${v.length}` };
+      return { ok: true, msg: `Postal code: ${v}` };
+    }
+  },
+  '63': {
+    std: 'tepat 4 char hex (CRC16-CCITT)',
+    note: 'EMVCo QR §3.1',
+    validate(v, rawStr) {
+      if (!/^[0-9A-Fa-f]{4}$/.test(v)) return { ok: false, msg: `CRC harus 4 hex char, ditemukan "${v}"` };
+      // Hitung CRC16-CCITT dari awal string sampai sebelum value CRC
+      let computed = crc16(rawStr);
+      let computedHex = computed.toString(16).toUpperCase().padStart(4,'0');
+      if (computedHex !== v.toUpperCase()) return { ok: false, msg: `CRC tidak cocok! Expected: ${computedHex}, ditemukan: ${v.toUpperCase()}` };
+      return { ok: true, msg: `CRC valid (${v.toUpperCase()})` };
+    }
+  },
+};
+
+// Sub-tag rules
+const SUB_RULES = {
+  // Untuk semua tag 26-51, sub 00 = GUID max 32
+  '__guid': {
+    std: 'max 32 char',
+    note: 'EMVCo QR §4.7',
+    validate(v) {
+      if (v.length > 32) return { ok: false, msg: `GUID maks 32 char, ditemukan ${v.length}` };
+      if (v.length === 0) return { ok: false, msg: 'GUID tidak boleh kosong' };
+      return { ok: true, msg: `GUID valid (${v.length} char)` };
+    }
+  },
+  // sub 01 = MPAN, max 19 numerik (domestic) atau 28 untuk cross border
+  '__mpan': {
+    std: 'max 19 char numerik',
+    note: 'QRIS ASPI / ALTO Spec DE02',
+    validate(v) {
+      if (v.length > 19) return { ok: true, warn: true, msg: `Lebih dari 19 char (${v.length}), mungkin cross-border PAN` };
+      if (!/^\d+$/.test(v)) return { ok: false, msg: `MPAN harus numerik` };
+      return { ok: true, msg: `MPAN valid (${v.length} digit)` };
+    }
+  },
+  // sub 02 = MID, max 15
+  '__mid': {
+    std: 'max 15 char',
+    note: 'QRIS ASPI / ALTO Spec DE42',
+    validate(v) {
+      if (v.length > 15) return { ok: false, msg: `MID maks 15 char, ditemukan ${v.length}` };
+      return { ok: true, msg: `MID valid (${v.length} char)` };
+    }
+  },
+  // sub 03 = Merchant Criteria, 3 char
+  '__mc': {
+    std: '3 char (UMI / UKE / UBE / dll)',
+    note: 'QRIS ASPI',
+    validate(v) {
+      const valid = ['UMI','UKE','UBE','USK','UBK'];
+      if (v.length !== 3) return { ok: false, msg: `Merchant Criteria harus 3 char, ditemukan ${v.length}` };
+      if (!valid.includes(v.toUpperCase())) return { ok: true, warn: true, msg: `Nilai "${v}" tidak dikenal. Nilai umum: UMI, UKE, UBE, USK, UBK` };
+      return { ok: true, msg: `Merchant Criteria: ${v}` };
+    }
+  },
+  // tag 62 sub-tags
+  '62_01': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
+  '62_02': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
+  '62_03': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
+  '62_04': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
+  '62_05': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
+  '62_06': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
+  '62_07': { std: 'max 25 char', note: 'EMVCo / ALTO Spec DE41', validate(v){ return v.length<=25?{ok:true,msg:`Terminal: ${v}`}:{ok:false,msg:`Maks 25 char`}; } },
+  '62_08': { std: 'max 25 char', note: 'EMVCo', validate(v){ return v.length<=25?{ok:true,msg:`${v.length} char`}:{ok:false,msg:`Maks 25 char`}; } },
+  '62_09': { std: 'max 3 char, A/E/M', note: 'EMVCo', validate(v){ if(v.length>3)return{ok:false,msg:'Maks 3 char'};return{ok:true,msg:v}; } },
+};
+
+function getSubRule(parentTag, subTag) {
+  let key = `${parentTag}_${subTag}`;
+  if (SUB_RULES[key]) return SUB_RULES[key];
+  let n = parseInt(parentTag);
+  let isMerchantAcct = (n>=26&&n<=51);
+  if (isMerchantAcct) {
+    if (subTag==='00') return SUB_RULES['__guid'];
+    if (subTag==='01') return SUB_RULES['__mpan'];
+    if (subTag==='02') return SUB_RULES['__mid'];
+    if (subTag==='03') return SUB_RULES['__mc'];
+  }
+  return null;
+}
+
+// ── CRC16-CCITT ──────────────────────────────────────────────────────────
+function crc16(str) {
+  // CRC16-CCITT: poly 0x1021, init 0xFFFF
+  // Input: string up to and including "6304" (tag+len of CRC, no value)
+  // Find position of CRC tag in string
+  let idx = str.lastIndexOf('6304');
+  if (idx === -1) return 0;
+  let payload = str.substring(0, idx + 4); // include "6304" but not value
+  let crc = 0xFFFF;
+  for (let i=0; i<payload.length; i++) {
+    let byte = payload.charCodeAt(i);
+    crc ^= (byte << 8);
+    for (let j=0; j<8; j++) {
+      if (crc & 0x8000) crc = ((crc << 1) ^ 0x1021) & 0xFFFF;
+      else crc = (crc << 1) & 0xFFFF;
+    }
+  }
+  return crc;
+}
+
+// ── TLV Parser ───────────────────────────────────────────────────────────
+function parseTLV(str, baseOffset=0) {
+  let result=[];
+  let pos=0;
+  while (pos+4<=str.length) {
+    let tag=str.substr(pos,2);
+    let lenStr=str.substr(pos+2,2);
+    let len=parseInt(lenStr,10);
+    if (isNaN(len)||pos+4+len>str.length) break;
+    let val=str.substr(pos+4,len);
+    result.push({tag,len,val,pos:baseOffset+pos});
+    pos+=4+len;
+  }
+  return result;
+}
+
+// ── Type Detection ──────────────────────────────────────────────────────────
+function detectType(fields) {
+  let tags=fields.map(f=>f.tag);
+  let numTags=tags.map(t=>parseInt(t));
+  if (tags.includes('51')) return {label:'QRIS MPM – National (tag 51)',cls:'badge-mpm'};
+  if (fields.some(f=>f.tag==='40')) return {label:'QRIS TCICO – Transfer / Cash In / Cash Out (tag 40)',cls:'badge-tcico'};
+  if (numTags.some(n=>n>=26&&n<=50)) return {label:'QRIS MPM – Acquirer Specific (tag 26-50)',cls:'badge-mpm'};
+  if (tags.includes('63')) return {label:'QR EMV Format (bukan QRIS)',cls:'badge-unknown'};
+  return {label:'Format QR tidak dikenal / bukan QRIS',cls:'badge-unknown'};
+}
+
+function enrichValue(tag, val) {
+  if (tag==='53') return `${val}${CURRENCY_CODES[val]?' → '+CURRENCY_CODES[val]:''}`;
+  if (tag==='01') return `${val} → ${POI[val]||'Unknown'}`;
+  if (tag==='63') return `${val} (CRC16-CCITT)`;
+  if (tag==='52') return `${val} (MCC)`;
+  return val;
+}
+
+// ── Validate a field ─────────────────────────────────────────────────────────
+function validateField(tag, val, rawStr) {
+  let rule = RULES[tag];
+  if (!rule) return null; // no rule = not validated
+  let result = rule.validate(val, rawStr);
+  return { std: rule.std, note: rule.note, ...result };
+}
+
+function validateSubField(parentTag, subTag, val) {
+  let rule = getSubRule(parentTag, subTag);
+  if (!rule) return null;
+  let result = rule.validate(val);
+  return { std: rule.std, note: rule.note, ...result };
+}
+
+// ── Status HTML ───────────────────────────────────────────────────────────
+function statusHtml(v) {
+  if (!v) return `<span class="status-na" title="Tidak divalidasi">–</span>`;
+  let icon, cls, tip;
+  if (v.ok && !v.warn) { icon='✓'; cls='status-ok'; tip=v.msg||'Sesuai spec'; }
+  else if (v.ok && v.warn) { icon='!'; cls='status-warn'; tip=v.msg||'Perlu perhatian'; }
+  else { icon='✗'; cls='status-err'; tip=v.msg||'Tidak sesuai spec'; }
+  return `<div class="tooltip-wrap"><span class="${cls}">${icon}</span><div class="tooltip">${esc(tip)}</div></div>`;
+}
+
+function stdHtml(v) {
+  if (!v) return `<span class="iso-std" style="color:#ccc">–</span>`;
+  return `<span class="iso-std"><span class="iso-rule">${esc(v.std)}</span><span class="iso-note">${esc(v.note||'')}</span></span>`;
+}
+
+function rowCls(v, isSubRow) {
+  let base = isSubRow ? 'sub-row' : '';
+  if (!v) return base;
+  if (!v.ok) return base + ' row-err';
+  if (v.warn) return base + ' row-warn';
+  return base;
+}
+
+// ── Table Render ───────────────────────────────────────────────────────────
+function renderTable(fields, rawStr) {
+  let html='';
+  let stats={ok:0,warn:0,err:0,na:0};
+
+  fields.forEach(f=>{
+    let desc=TAGS[f.tag]||`Tag ${f.tag} (Unknown)`;
+    let subs=SUB_TAGS[f.tag];
+    let subfields=subs?parseTLV(f.val,f.pos+4):[];
+    let enriched=enrichValue(f.tag,f.val);
+    let vr=validateField(f.tag,f.val,rawStr);
+    let rc=rowCls(vr,false);
+    if(!vr) stats.na++; else if(!vr.ok) stats.err++; else if(vr.warn) stats.warn++; else stats.ok++;
+
+    html+=`<tr class="${rc}">
+      <td><span class="tag-pill">${esc(f.tag)}</span></td>
+      <td><strong>${esc(desc)}</strong></td>
+      <td class="mono">${esc(enriched)}${subfields.length?`<br><span class="sub-label">↳ berisi ${subfields.length} sub-tag</span>`:''}</td>
+      <td class="num">${f.pos}</td>
+      <td class="num">${f.len}</td>
+      <td>${stdHtml(vr)}</td>
+      <td class="status-cell">${statusHtml(vr)}</td>
+    </tr>`;
+
+    subfields.forEach(sf=>{
+      let sdesc=(subs&&subs[sf.tag])||`Sub-tag ${sf.tag}`;
+      let svr=validateSubField(f.tag,sf.tag,sf.val);
+      let src=rowCls(svr,true);
+      if(!svr) stats.na++; else if(!svr.ok) stats.err++; else if(svr.warn) stats.warn++; else stats.ok++;
+      html+=`<tr class="${src}">
+        <td class="sub-indent"><span class="tag-pill sub-tag-pill">${esc(f.tag)}.${esc(sf.tag)}</span></td>
+        <td style="color:#555">${esc(sdesc)}</td>
+        <td class="mono">${esc(sf.val)}</td>
+        <td class="num">${sf.pos}</td>
+        <td class="num">${sf.len}</td>
+        <td>${stdHtml(svr)}</td>
+        <td class="status-cell">${statusHtml(svr)}</td>
+      </tr>`;
+    });
+  });
+
+  document.getElementById('tableBody').innerHTML=html;
+  return stats;
+}
+
+// ── Tree Render ───────────────────────────────────────────────────────────
+function renderTree(fields, rawStr) {
+  let root=document.getElementById('treeRoot');
+  root.innerHTML='';
+  fields.forEach(f=>{
+    let desc=TAGS[f.tag]||`Tag ${f.tag} (Unknown)`;
+    let subs=SUB_TAGS[f.tag];
+    let subfields=subs?parseTLV(f.val,f.pos+4):[];
+    let hasChildren=subfields.length>0;
+    let vr=validateField(f.tag,f.val,rawStr);
+    let enriched=enrichValue(f.tag,f.val);
+
+    let li=document.createElement('li');
+    let itemCls='tree-item'+(hasChildren?'':' tree-leaf');
+    if(vr&&!vr.ok) itemCls+=' tree-item-err';
+    else if(vr&&vr.warn) itemCls+=' tree-item-warn';
+    li.className=itemCls;
+
+    let header=document.createElement('div');
+    header.className='tree-header';
+    header.innerHTML=`
+      <span class="tree-toggle">${hasChildren?'▶':''}</span>
+      <span class="tree-tag">${esc(f.tag)}</span>
+      <span class="tree-desc">${esc(desc)}</span>
+      <span class="tree-val" title="${esc(f.val)}">${esc(enriched.length>36?enriched.substr(0,36)+'…':enriched)}</span>
+      <span class="tree-meta">pos:${f.pos} len:${f.len}</span>
+      <span class="tree-status">${statusHtml(vr)}</span>`;
+    li.appendChild(header);
+
+    if(hasChildren){
+      let childUl=document.createElement('ul');
+      childUl.className='tree-node tree-children';
+      childUl.style.display='none';
+      subfields.forEach(sf=>{
+        let sdesc=(subs&&subs[sf.tag])||`Sub-tag ${sf.tag}`;
+        let svr=validateSubField(f.tag,sf.tag,sf.val);
+        let sli=document.createElement('li');
+        let scls='tree-item tree-leaf tree-sub';
+        if(svr&&!svr.ok) scls+=' tree-item-err';
+        else if(svr&&svr.warn) scls+=' tree-item-warn';
+        sli.className=scls;
+        sli.innerHTML=`<div class="tree-header">
+          <span class="tree-toggle" style="visibility:hidden"></span>
+          <span class="tree-tag">${esc(f.tag)}.${esc(sf.tag)}</span>
+          <span class="tree-desc">${esc(sdesc)}</span>
+          <span class="tree-val" title="${esc(sf.val)}">${esc(sf.val.length>36?sf.val.substr(0,36)+'…':sf.val)}</span>
+          <span class="tree-meta">pos:${sf.pos} len:${sf.len}</span>
+          <span class="tree-status">${statusHtml(svr)}</span>
+        </div>`;
+        childUl.appendChild(sli);
+      });
+      li.appendChild(childUl);
+      header.addEventListener('click',()=>{
+        let tog=header.querySelector('.tree-toggle');
+        if(childUl.style.display==='none'){childUl.style.display='';tog.classList.add('open');}
+        else{childUl.style.display='none';tog.classList.remove('open');}
+      });
+    }
+    root.appendChild(li);
+  });
+}
+
+// ── Summary Bar ───────────────────────────────────────────────────────────
+function renderSummary(stats) {
+  let bar=document.getElementById('summaryBar');
+  bar.innerHTML=`
+    <span class="sum-chip sum-ok">✓ ${stats.ok} field sesuai</span>
+    ${stats.warn?`<span class="sum-chip sum-warn">! ${stats.warn} perlu perhatian</span>`:''}
+    ${stats.err?`<span class="sum-chip sum-err">✗ ${stats.err} tidak sesuai</span>`:''}
+    <span class="sum-chip" style="background:#f0f0f0;color:#888">– ${stats.na} tidak divalidasi</span>`;
+  bar.classList.add('visible');
+}
+
+// ── Core ─────────────────────────────────────────────────────────────
+function esc(s){return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');}
+
+function processRawString(raw) {
+  showLoading(false);
+  document.getElementById('rawText').textContent=raw;
+  document.getElementById('rawBox').style.display='block';
+  let fields=parseTLV(raw,0);
+  if(fields.length===0){showError('QR terbaca namun bukan format EMV/QRIS.');return;}
+  let type=detectType(fields);
+  let badge=document.getElementById('typeBadge');
+  badge.textContent=type.label;badge.className='type-badge '+type.cls;
+  let stats=renderTable(fields,raw);
+  renderTree(fields,raw);
+  renderSummary(stats);
+  document.getElementById('resultWrap').style.display='block';
+}
+
+function decodeImage(src){
+  showLoading(true);clearResults();
+  let img=new Image();
+  img.onload=()=>{
+    let scales=[1,2,0.5];let found=false;
+    for(let scale of scales){
+      let canvas=document.createElement('canvas');
+      canvas.width=img.width*scale;canvas.height=img.height*scale;
+      let ctx=canvas.getContext('2d');ctx.drawImage(img,0,0,canvas.width,canvas.height);
+      let imgData=ctx.getImageData(0,0,canvas.width,canvas.height);
+      let code=jsQR(imgData.data,imgData.width,imgData.height,{inversionAttempts:'attemptBoth'});
+      if(code){processRawString(code.data);found=true;break;}
+    }
+    if(!found){showLoading(false);showError('QR tidak terdeteksi. Pastikan gambar jelas dan QR terlihat penuh.');}
+  };
+  img.onerror=()=>{showLoading(false);showError('Gagal memuat gambar.');};
+  img.src=src;
+}
+
+function clearResults(){
+  document.getElementById('errBox').style.display='none';
+  document.getElementById('resultWrap').style.display='none';
+  document.getElementById('rawBox').style.display='none';
+  document.getElementById('previewWrap').style.display='none';
+  document.getElementById('summaryBar').classList.remove('visible');
+}
+function showError(msg){showLoading(false);let e=document.getElementById('errBox');e.textContent=msg;e.style.display='block';}
+function showLoading(show){document.getElementById('loading').style.display=show?'block':'none';}
+function switchTab(t){
+  document.querySelectorAll('.tab').forEach((el,i)=>el.classList.toggle('active',['table','tree'][i]===t));
+  document.getElementById('tabTable').classList.toggle('active',t==='table');
+  document.getElementById('tabTree').classList.toggle('active',t==='tree');
+}
+function switchEntry(section) {
+  document.querySelectorAll('.entry-tab').forEach((el, i) => el.classList.toggle('active', ['image', 'raw'][i] === section));
+  document.getElementById('entryImage').classList.toggle('active', section === 'image');
+  document.getElementById('entryRaw').classList.toggle('active', section === 'raw');
+}
+function copyRaw(){navigator.clipboard.writeText(document.getElementById('rawText').textContent).then(()=>alert('Berhasil dicopy!'));}
+function clearRawInput(){document.getElementById('rawStringInput').value='';}
+
+function processRawStringInput() {
+  let raw = document.getElementById('rawStringInput').value.trim();
+  if (!raw) {
+    showError('Harap masukkan raw QR string.');
+    return;
+  }
+  // Trim any whitespace
+  raw = raw.replace(/\s/g, '');
+  if (!/^[0-9a-fA-F]*$/.test(raw)) {
+    showError('Raw QR string hanya boleh berisi karakter hexadecimal (0-9, A-F).');
+    return;
+  }
+  clearResults();
+  processRawString(raw);
+}
+
+function handleFile(file){
+  if(!file)return;
+  if(!file.type.startsWith('image/')){showError('File bukan gambar.');return;}
+  let reader=new FileReader();
+  reader.onload=e=>{
+    let src=e.target.result;
+    document.getElementById('previewImg').src=src;
+    document.getElementById('previewWrap').style.display='block';
+    decodeImage(src);
+  };
+  reader.readAsDataURL(file);
+}
+
+async function pasteFromClipboard(){
+  try{
+    let items=await navigator.clipboard.read();
+    for(let item of items){
+      let t=item.types.find(t=>t.startsWith('image/'));
+      if(t){handleFile(await item.getType(t));return;}
+    }
+    showError('Tidak ada gambar di clipboard.');
+  }catch(err){showError('Tidak bisa akses clipboard: '+err.message);}
+}
+
+document.getElementById('fileInput').addEventListener('change',e=>handleFile(e.target.files[0]));
+let dz=document.getElementById('dropZone');
+dz.addEventListener('dragover',e=>{e.preventDefault();dz.classList.add('drag');});
+dz.addEventListener('dragleave',()=>dz.classList.remove('drag'));
+dz.addEventListener('drop',e=>{e.preventDefault();dz.classList.remove('drag');handleFile(e.dataTransfer.files[0]);});
+document.addEventListener('paste',e=>{
+  let items=e.clipboardData&&e.clipboardData.items;
+  if(!items)return;
+  for(let item of items){if(item.type.startsWith('image/')){handleFile(item.getAsFile());return;}}
+});
+</script>
+</body>
+</html>
